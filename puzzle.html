@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>15 Puzzle Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 20px;
+    }
+    h1 {
+        margin-bottom: 10px;
+        color: #333;
+    }
+    #board {
+        display: grid;
+        grid-template-columns: repeat(4, 80px);
+        grid-gap: 10px;
+        margin-top: 20px;
+    }
+    .tile {
+        width: 80px;
+        height: 80px;
+        font-size: 28px;
+        font-weight: bold;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
+    .blank {
+        background: #ccc;
+        cursor: default;
+    }
+    #info {
+        margin-top: 15px;
+        font-size: 18px;
+        color: #333;
+    }
+    button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 10px;
+        border: none;
+        background: #2196F3;
+        color: white;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<h1>15-Puzzle Game</h1>
+
+<div id="info">
+    Moves: <span id="moves">0</span> |
+    Time: <span id="time">00:00</span>
+</div>
+
+<div id="board"></div>
+
+<button onclick="newGame()">New Game</button>
+
+<script>
+let tiles = [];
+let moveCount = 0;
+let startTime = null;
+let timerInterval = null;
+
+function initBoard() {
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+    tiles.forEach((num, i) => {
+        const div = document.createElement("div");
+        div.classList.add("tile");
+        if (num === 0) {
+            div.classList.add("blank");
+        } else {
+            div.textContent = num;
+            div.onclick = () => moveTile(i);
+        }
+        board.appendChild(div);
+    });
+}
+
+function shuffleSolvable() {
+    let arr;
+    do {
+        arr = Array.from({length: 15}, (_, i) => i + 1).concat(0)
+                   .sort(() => Math.random() - 0.5);
+    } while (!isSolvable(arr) || isGoal(arr));
+    return arr;
+}
+
+function isSolvable(arr) {
+    let inv = 0;
+    const flat = arr.filter(x => x !== 0);
+    for (let i = 0; i < flat.length; i++)
+        for (let j = i + 1; j < flat.length; j++)
+            if (flat[i] > flat[j]) inv++;
+
+    const blankRow = 4 - Math.floor(arr.indexOf(0) / 4);
+    return (inv + blankRow) % 2 === 1;
+}
+
+function isGoal(arr) {
+    return arr.join(",") === "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0";
+}
+
+function moveTile(i) {
+    const blank = tiles.indexOf(0);
+    const r1 = Math.floor(i / 4), c1 = i % 4;
+    const r2 = Math.floor(blank / 4), c2 = blank % 4;
+
+    if ((Math.abs(r1 - r2) === 1 && c1 === c2) ||
+        (Math.abs(c1 - c2) === 1 && r1 === r2)) {
+
+        [tiles[i], tiles[blank]] = [tiles[blank], tiles[i]];
+        moveCount++;
+        document.getElementById("moves").textContent = moveCount;
+        initBoard();
+
+        if (isGoal(tiles)) {
+            clearInterval(timerInterval);
+            alert("🎉 You solved it!\nMoves: " + moveCount);
+        }
+    }
+}
+
+function startTimer() {
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+        const t = Math.floor((Date.now() - startTime) / 1000);
+        const m = String(Math.floor(t / 60)).padStart(2, "0");
+        const s = String(t % 60).padStart(2, "0");
+        document.getElementById("time").textContent = `${m}:${s}`;
+    }, 1000);
+}
+
+function newGame() {
+    tiles = shuffleSolvable();
+    moveCount = 0;
+    document.getElementById("moves").textContent = 0;
+    document.getElementById("time").textContent = "00:00";
+    clearInterval(timerInterval);
+    startTimer();
+    initBoard();
+}
+
+newGame();
+</script>
+
+</body>
+</html>
